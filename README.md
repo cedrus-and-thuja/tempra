@@ -5,7 +5,7 @@ A super bare bones template cli written in go.
 ## Installation
 
 ```
-go install github.com/cedrus-and-thuja/tempra/cmd/tempra
+go install github.com/cedrus-and-thuja/tempra/cmd/tempra@latest
 ```
 
 ## usage
