@@ -1,0 +1,74 @@
+version: '3'
+
+env:
+  CGO_ENABLED: 0
+
+silent: true
+
+tasks:
+  setup:
+    cmds:
+      - echo "Hello, World!"
+      - go install honnef.co/go/tools/cmd/staticcheck@latest
+      - go install golang.org/x/vuln/cmd/govulncheck@latest
+      - go install golang.org/x/tools/cmd/goimports@latest
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  
+  info:
+    cmds:
+    - 'echo "Version: {{ .VERSION }}"'
+    - 'echo "Short SHA: {{ .SHORT_SHA }}"'
+    - 'echo "App Name: {{ .APP_NAME }}"'
+    - 'echo "Docker Image: {{ .DOCKER_IMAGE }}"'
+    - 'echo "PR Tag: {{ .PR_TAG }}"'
+    - 'echo "Github Ref: {{ .GITHUB_REF }}"'
+  
+  lint:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go vet ./...
+      - gofmt -w .
+      - staticcheck $(go list ./...)
+      - golangci-lint run -E interfacebloat
+  
+  tidy:
+    cmds:
+      - go mod tidy
+  
+  vendor:
+    env:
+      GOWORK: off
+    cmds:
+      - go mod vendor
+  
+  test:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - "echo 'mode: atomic' > profile.cov"
+      - go test -coverpkg=./internal/... -coverprofile=cover.out -timeout 300s -v -count=1 ./...
+      - go tool cover -func=cover.out
+      - go tool cover -html=cover.out -o coverage.html
+
+  test-nocover:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go test -v -failfast -timeout 60s -count=1 ./...
+
+  check:
+    deps: [tidy, lint, test]
+
+
+  build:
+    deps: [tidy, vendor]
+    env:
+      GOWORK: off
+    cmds:
+      - rm -rf bin
+      - go build -o bin/tempra -mod=vendor -v cmd/tempra/main.go
+
+  run:
+    cmds:
+      - go run ./cmd/tempra/main.go
