@@ -72,3 +72,7 @@ tasks:
   run:
     cmds:
       - go run ./cmd/tempra/main.go
+
+  install:
+    cmds:
+      - go install -v ./cmd/tempra
